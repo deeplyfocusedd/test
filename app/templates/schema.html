@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Схема БД{% endblock %}
+
+{% block content %}
+<h2>Схема базы данных</h2>
+
+<h3>Таблица gosts</h3>
+<pre>
+CREATE TABLE gosts (
+    id          SERIAL PRIMARY KEY,
+    number      VARCHAR(50) UNIQUE NOT NULL,
+    title       TEXT NOT NULL,
+    year        INT,
+    description TEXT,
+    metadata    JSONB NOT NULL DEFAULT '{}'
+);
+</pre>
+
+<h3>Таблица fasteners</h3>
+<pre>
+CREATE TABLE fasteners (
+    id          SERIAL PRIMARY KEY,
+    type_name   VARCHAR(100) NOT NULL,
+    name        TEXT NOT NULL,
+    gost_number VARCHAR(50) NOT NULL REFERENCES gosts(number),
+    params      JSONB NOT NULL DEFAULT '{}',
+    created_at  TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Индексы
+CREATE INDEX idx_gin_params ON fasteners USING GIN(params);
+CREATE INDEX idx_btree_d    ON fasteners (((params->>'d')::numeric));
+CREATE INDEX idx_btree_d1   ON fasteners (((params->>'d1')::numeric));
+CREATE INDEX idx_btree_l    ON fasteners (((params->>'l')::numeric));
+</pre>
+
+<h3>Пример JSONB документа (Шпилька М10х80)</h3>
+<pre>
+{
+    "d": 10,
+    "d1": 10,
+    "l": 80,
+    "P_coarse": 1.5,
+    "tolerance": "6g",
+    "strength": "5.8"
+}
+</pre>
+{% endblock %}

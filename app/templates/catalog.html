@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+{% block title %}Каталог КИ{% endblock %}
+
+{% block content %}
+<h2>Каталог крепёжных изделий</h2>
+<p>Всего записей в БД: <b>{{ stats.total }}</b></p>
+
+<h3>Поиск</h3>
+<div>
+    <label>Тип:</label>
+    <select id="f-type">
+        <option value="">Все</option>
+        {% for t in types %}
+        <option value="{{ t }}">{{ t }}</option>
+        {% endfor %}
+    </select>
+
+    <label>Диаметр d (мм):</label>
+    <input type="number" id="f-d" placeholder="напр. 10">
+
+    <label>Диаметр стержня d1 (мм):</label>
+    <input type="number" id="f-d1" placeholder="напр. 10">
+
+    <label>Длина l от:</label>
+    <input type="number" id="f-lmin" placeholder="от">
+
+    <label>до:</label>
+    <input type="number" id="f-lmax" placeholder="до">
+
+    <label>ГОСТ:</label>
+    <select id="f-gost">
+        <option value="">Все</option>
+        {% for g in gost_numbers %}
+        <option value="{{ g }}">{{ g }}</option>
+        {% endfor %}
+    </select>
+
+    <button onclick="loadData()">Найти</button>
+    <button onclick="resetFilters()">Сбросить</button>
+</div>
+
+<br>
+<p>Найдено: <b id="s-found">—</b></p>
+
+<table>
+    <thead>
+        <tr>
+            <th>Тип</th>
+            <th>Наименование</th>
+            <th>ГОСТ</th>
+            <th>d, мм</th>
+            <th>d1, мм</th>
+            <th>l, мм</th>
+            <th>Шаг P</th>
+            <th>Допуск</th>
+            <th>Класс пр.</th>
+        </tr>
+    </thead>
+    <tbody id="catalog-tbody">
+        <tr><td colspan="9">Нажмите "Найти"</td></tr>
+    </tbody>
+</table>
+{% endblock %}
+
+{% block scripts %}
+<script>
+async function loadData() {
+    const params = new URLSearchParams();
+    const v = id => document.getElementById(id).value;
+
+    if (v('f-type'))  params.set('type_name',  v('f-type'));
+    if (v('f-d'))     params.set('d',           v('f-d'));
+    if (v('f-d1'))    params.set('d1',          v('f-d1'));
+    if (v('f-lmin'))  params.set('l_min',       v('f-lmin'));
+    if (v('f-lmax'))  params.set('l_max',       v('f-lmax'));
+    if (v('f-gost'))  params.set('gost_number', v('f-gost'));
+
+    const res  = await fetch('/api/fasteners?' + params.toString());
+    const data = await res.json();
+
+    document.getElementById('s-found').textContent = data.total;
+
+    if (!data.items.length) {
+        document.getElementById('catalog-tbody').innerHTML =
+            '<tr><td colspan="9">Ничего не найдено</td></tr>';
+        return;
+    }
+
+    document.getElementById('catalog-tbody').innerHTML = data.items.map(f => `
+        <tr>
+            <td>${f.type_name}</td>
+            <td>${f.name}</td>
+            <td>${f.gost_number}</td>
+            <td>${f.d ?? '—'}</td>
+            <td>${f.d1 ?? '—'}</td>
+            <td>${f.l ?? '—'}</td>
+            <td>${f.pitch ?? '—'}</td>
+            <td>${f.tolerance ?? '—'}</td>
+            <td>${f.strength ?? '—'}</td>
+        </tr>`).join('');
+}
+
+function resetFilters() {
+    ['f-type', 'f-gost'].forEach(id => document.getElementById(id).value = '');
+    ['f-d', 'f-d1', 'f-lmin', 'f-lmax'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('catalog-tbody').innerHTML =
+        '<tr><td colspan="9">Нажмите "Найти"</td></tr>';
+    document.getElementById('s-found').textContent = '—';
+}
+
+loadData();
+</script>
+{% endblock %}

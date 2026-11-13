@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}ГОСТы{% endblock %}
+
+{% block content %}
+<h2>Справочник ГОСТов</h2>
+
+<table>
+    <thead>
+        <tr>
+            <th>Номер</th>
+            <th>Наименование</th>
+            <th>Год</th>
+            <th>Описание</th>
+            <th>Записей в БД</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for g in gosts %}
+        <tr>
+            <td><b>{{ g.number }}</b></td>
+            <td>{{ g.title }}</td>
+            <td>{{ g.year }}</td>
+            <td>{{ g.description }}</td>
+            <td>{{ g.fastener_count }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

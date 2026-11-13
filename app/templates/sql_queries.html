@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}SQL-запросы{% endblock %}
+
+{% block content %}
+<h2>Примеры SQL-запросов</h2>
+
+<h3>Поиск шпилек по d1 и длине</h3>
+<pre>
+SELECT * FROM fasteners
+WHERE type_name = 'Шпилька'
+  AND (params->>'d1')::numeric = 10
+  AND (params->>'l')::numeric  = 80;
+</pre>
+
+<h3>Поиск болтов в диапазоне диаметров</h3>
+<pre>
+SELECT * FROM fasteners
+WHERE type_name = 'Болт'
+  AND (params->>'d')::numeric BETWEEN 8 AND 16
+  AND (params->>'l')::numeric >= 50;
+</pre>
+
+<h3>Поиск через оператор @> (containment)</h3>
+<pre>
+SELECT * FROM fasteners
+WHERE params @> '{"strength": "5.8", "tolerance": "6g"}'::jsonb;
+</pre>
+
+<h3>Обновление одного поля JSONB</h3>
+<pre>
+UPDATE fasteners
+SET params = jsonb_set(params, '{mass_1000}', '42.5')
+WHERE id = 1;
+</pre>
+
+<h3>Агрегация по типам</h3>
+<pre>
+SELECT type_name, COUNT(*),
+    MIN((params->>'d')::numeric) AS d_min,
+    MAX((params->>'d')::numeric) AS d_max
+FROM fasteners
+GROUP BY type_name;
+</pre>
+{% endblock %}
